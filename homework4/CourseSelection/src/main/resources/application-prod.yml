@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: jdbc:mysql://192.168.10.20:3306/course_select?useSSL=true
+    username: prod_user
+    password: ${DB_PASSWORD}
+  jpa:
+    show-sql: false  # 生产关闭 SQL 打印，防止泄露数据
+    hibernate:
+      ddl-auto: validate  # 仅校验表结构，不修改
+  sql:
+    init:
+      mode: never  # 生产禁止自动执行脚本，避免数据冲突
