@@ -1,0 +1,10 @@
+# Maven - keep target/ for copying pre-built JAR
+.mvn/
+**/node_modules/**
+**/.DS_Store
+.git
+.gitignore
+.idea
+.vscode
+*.iml
+*.log

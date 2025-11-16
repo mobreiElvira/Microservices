@@ -1,0 +1,33 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/course_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:root123}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # JPA 配置（自动创建/更新表结构）
+  jpa:
+    hibernate:
+      ddl-auto: update  # 自动根据实体类创建/更新表
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect  # 适配 MySQL 8
+        format_sql: true  # 格式化 SQL 日志（可选，方便调试）
+    show-sql: true  # 显示 SQL 执行语句（开发环境可选）
+
+  # 激活 Docker 专用 profile（与文件名对应）
+  profiles:
+    active: docker
+
+# 日志配置（调整级别，避免冗余日志）
+logging:
+  level:
+    root: INFO  # 根日志级别
+    org.springframework.web: INFO  # Spring Web 日志级别
+    org.hibernate: WARN  # Hibernate 日志级别（避免过多 SQL 细节）
+    com.zjsu.ljy.course: DEBUG  # 应用自身包的日志级别（方便调试）
+
+# 服务器端口（默认 8080，与 Docker 映射一致）
+server:
+  port: 8080
+
