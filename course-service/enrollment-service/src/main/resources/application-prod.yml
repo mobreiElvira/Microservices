@@ -1,0 +1,26 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    show-sql: false  # 生产关闭 SQL 打印，防止泄露数据
+    hibernate:
+      ddl-auto: validate  # 仅校验表结构，不修改
+    properties:
+      hibernate:
+        # 显式指定方言，解决识别失败问题
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+      show-sql: true
+  sql:
+    init:
+      mode: never  # 生产禁止自动执行脚本，避免数据冲突
+
+# 服务配置
+server:
+  port: 8082
+
+# 外部服务URL配置
+catalog-service:
+  url: ${CATALOG_SERVICE_URL}

@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: enrollment_service
+  profiles:
+    active: dev
+
+server:
+  port: 8082
+
+logging:
+  level:
+    com.zjsu.ljy.course: INFO
+    org.springframework.web: INFO
+
+# enrollment-service/application.yml
+catalog-service:
+  url: http://localhost:8081 # 开发环境
+  # url: http://catalog-service:8081 # Docker环境

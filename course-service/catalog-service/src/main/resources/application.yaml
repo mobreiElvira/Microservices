@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: catalog_service
+  profiles:
+    active: dev
+
+server:
+  port: 8081
+
+logging:
+  level:
+    com.zjsu.ljy.course: INFO
+    org.springframework.web: INFO
