@@ -3,6 +3,15 @@ spring:
     name: enrollment_service
   profiles:
     active: dev
+  cloud:
+    nacos:
+      discovery:
+        server-addr: nacos:8848
+        namespace: dev
+        group: COURSEHUB_GROUP
+        ephemeral: true
+        heart-beat-interval: 5000
+        heart-beat-timeout: 15000
 
 server:
   port: 8082
@@ -14,5 +23,5 @@ logging:
 
 # enrollment-service/application.yml
 catalog-service:
-  url: http://localhost:8081 # 开发环境
+  url: http://catalog-service:8081 # 开发环境
   # url: http://catalog-service:8081 # Docker环境
