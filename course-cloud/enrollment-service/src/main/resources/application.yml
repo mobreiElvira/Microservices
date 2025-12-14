@@ -49,3 +49,33 @@ management:
   endpoint:
     health:
       show-details: always  # 显示健康详情，便于 Nacos 识别服务状态
+
+feign:
+  circuitbreaker:
+    enabled: true  # 启用熔断器
+  client:
+    config:
+      default:
+        connectTimeout: 3000  # 连接超时时间（3秒）
+        readTimeout: 5000     # 读取超时时间（5秒）
+
+# 9. Resilience4j 熔断器配置
+resilience4j:
+  circuitbreaker:
+    instances:
+      # 为 user-service 配置熔断器
+      user-service:
+        failureRateThreshold: 50  # 失败率阈值：50%
+        slidingWindowSize: 10     # 滑动窗口大小：10次请求
+        minimumNumberOfCalls: 5   # 触发熔断的最小调用次数
+        waitDurationInOpenState: 30000  # 熔断打开状态持续时间（30秒）
+        permittedNumberOfCallsInHalfOpenState: 3  # 半开状态允许的调用次数
+        eventConsumerBufferSize: 10  # 事件消费者缓冲区大小
+        # 为 catalog-service 配置熔断器
+      catalog-service:
+        failureRateThreshold: 50  # 失败率阈值：50%
+        slidingWindowSize: 10     # 滑动窗口大小：10次请求
+        minimumNumberOfCalls: 5   # 触发熔断的最小调用次数
+        waitDurationInOpenState: 30000  # 熔断打开状态持续时间（30秒）
+        permittedNumberOfCallsInHalfOpenState: 3  # 半开状态允许的调用次数
+        eventConsumerBufferSize: 10  # 事件消费者缓冲区大小

@@ -1,27 +1,25 @@
-# 校园选课系统 - 3services
+
+# 校园选课系统 - 微服务架构
 
 **项目名称**: course-cloud
 
-**版本**: v07
+**版本**: v08
 
-**演进基础**: 基于单体应用 course-v07 拆分的微服务架构实践项目
+**演进基础**: 基于单体应用 course-v07 拆分的微服务架构实践项目，已集成OpenFeign进行服务间通信
 
 ## 项目简介
 
-本项目将传统单体选课系统按业务域拆分为 **用户服务、课程目录服务、选课服务** 三大核心微服务，通过 Nacos 实现服务注册发现与负载均衡，采用 Docker 容器化部署保障环境一致性，各服务独立数据库存储实现数据隔离，基于 RestTemplate 实现服务间可靠通信，最终达成 **业务解耦、弹性扩展、故障容错** 的微服务核心目标。
+本项目将传统单体选课系统按业务域拆分为 **用户服务、课程目录服务、选课服务** 三大核心微服务，通过 Nacos 实现服务注册发现与负载均衡，采用 Docker 容器化部署保障环境一致性，各服务独立数据库存储实现数据隔离，基于 **OpenFeign** 实现服务间可靠通信，最终达成 **业务解耦、弹性扩展、故障容错** 的微服务核心目标。
 
-### 整体架构图（Mermaid 可视化）
+### 整体架构图
 
-![image-20251207204345299](C:\Users\20168\AppData\Roaming\Typora\typora-user-images\image-20251207204345299.png)
+![微服务架构图](architecture.png)
 
 ### 架构核心说明
 
 1. **客户端层**：接收用户操作请求，通过统一入口发起服务调用；
-
-2. **服务注册发现层**：Nacos 作为核心中间件，负责服务注册、健康检查、负载均衡和故障转移，是微服务通信的 “大脑”；
-
+2. **服务注册发现层**：Nacos 作为核心中间件，负责服务注册、健康检查、负载均衡和故障转移；
 3. **微服务层**：按业务域拆分的独立服务，可单独部署、扩容、迭代，互不影响；
-
 4. **数据存储层**：各服务对应独立数据库，实现数据隔离，避免单点故障影响全系统。
 
 ### 技术栈
@@ -32,9 +30,10 @@
 | Java                    | 17（开发语言，适配 Spring Boot 3.x） |
 | MySQL                   | 8.4（关系型数据库，数据持久化）           |
 | Docker & Docker Compose | 20.10+/2.0+（容器化部署，环境一致性）    |
-| RestTemplate            | 内置（服务间 HTTP 通信，支持负载均衡）      |
+| OpenFeign               | 内置（服务间 HTTP 通信，支持负载均衡和熔断）  |
 | Nacos                   | 2.2.3（服务注册发现 / 负载均衡 / 健康检查） |
 | Spring Cloud Alibaba    | 适配 Nacos 生态，微服务注册发现支持       |
+| Resilience4j            | 熔断降级实现                     |
 | Maven                   | 3.8+（项目构建与依赖管理）             |
 
 ### 环境要求
@@ -48,70 +47,6 @@
 | 操作系统       | Linux/macOS/Windows（Windows 需开启 WSL2） |
 | 内存           | 至少 4GB（推荐 8GB+，保障多容器运行流畅）  |
 
-### 服务详情
-
-1. 用户服务（user-service）
-
-* **核心端口**：8081（容器内 / 宿主机映射一致）
-
-* **数据库**：user\_db（宿主机端口 3306）
-
-* **核心功能**：学生 / 用户信息的增删改查，支持多实例部署与负载均衡
-
-* **关键 API**：
-
-| 接口                              | 方法     | 描述               |
-| ------------------------------- | ------ | ---------------- |
-| `/api/students`                 | GET    | 获取所有学生列表         |
-| `/api/students/{id}`            | GET    | 按 ID 查询学生        |
-| `/api/students/studentId/{sid}` | GET    | 按学号查询学生          |
-| `/api/students`                 | POST   | 新增学生（JSON 入参）    |
-| `/api/students/{id}`            | PUT    | 更新学生信息           |
-| `/api/students/{id}`            | DELETE | 删除学生             |
-| `/api/students/test`            | GET    | 负载均衡测试接口（返回实例信息） |
-| `/actuator/health`              | GET    | 健康检查接口（Nacos 探测） |
-
-#### 2. 课程目录服务（catalog-service）
-
-* **核心端口**：8082（容器内 / 宿主机映射一致）
-
-* **数据库**：catalog\_db（宿主机端口 3307）
-
-* **核心功能**：课程信息的增删改查，支持多实例部署与故障转移
-
-* **关键 API**：
-
-| 接口                         | 方法     | 描述               |
-| -------------------------- | ------ | ---------------- |
-| `/api/courses`             | GET    | 获取所有课程列表         |
-| `/api/courses/{id}`        | GET    | 按 ID 查询课程        |
-| `/api/courses/code/{code}` | GET    | 按课程代码查询          |
-| `/api/courses`             | POST   | 新增课程（JSON 入参）    |
-| `/api/courses/{id}`        | PUT    | 更新课程信息           |
-| `/api/courses/{id}`        | DELETE | 删除课程             |
-| `/api/courses/test`        | GET    | 负载均衡测试接口（返回实例信息） |
-| `/actuator/health`         | GET    | 健康检查接口（Nacos 探测） |
-
-#### 3. 选课服务（enrollment-service）
-
-* **核心端口**：8083（容器内 / 宿主机映射一致）
-
-* **数据库**：enrollment\_db（宿主机端口 3308）
-
-* **核心功能**：选课 / 退课逻辑处理，依赖用户服务验证学生合法性、课程服务验证课程有效性
-
-* **关键 API**：
-
-| 接口                               | 方法     | 描述                    |
-| -------------------------------- | ------ | --------------------- |
-| `/api/enrollments`               | GET    | 获取所有选课记录              |
-| `/api/enrollments/course/{cid}`  | GET    | 按课程 ID 查询选课记录         |
-| `/api/enrollments/student/{sid}` | GET    | 按学生 ID 查询选课记录         |
-| `/api/enrollments`               | POST   | 学生选课（需传入学生 ID、课程 ID）  |
-| `/api/enrollments/{id}`          | DELETE | 学生退课                  |
-| `/api/enrollments/test`          | GET    | 故障转移测试接口（调用用户 / 课程服务） |
-| `/actuator/health`               | GET    | 健康检查接口（Nacos 探测）      |
-
 ## 快速上手
 
 ### 1. 项目结构
@@ -121,309 +56,270 @@ course-cloud/
 ├── README.md               # 项目说明文档（本文档）
 ├── docker-compose.yml      # Docker 多容器编排配置
 ├── run.sh                  # 一键启动脚本（构建+启动所有服务）
-├── test-services.sh        # 基础功能测试脚本
-├── nacos-test.sh           # 负载均衡/故障转移测试脚本
+├── test-services.sh        # 基础功能测试脚本（创建初始学生和课程）
+├── test-load-balance.sh    # 负载均衡测试脚本
+├── Fallback.sh             # 熔断降级测试脚本
 ├── user-service/           # 用户服务模块（独立 Maven 项目）
-│   ├── src/                # 源码目录（Controller/Service/Mapper/Model）
-│   ├── Dockerfile          # 容器构建文件
-│   └── pom.xml             # Maven 依赖配置
-├── catalog-service/        # 课程服务模块（独立 Maven 项目）
-│   ├── src/
-│   ├── Dockerfile
-│   └── pom.xml
-└── enrollment-service/     # 选课服务模块（独立 Maven 项目）
-   ├── src/
-   ├── Dockerfile
-   └── pom.xml
+├── catalog-service/        # 课程目录服务模块（独立 Maven 项目）
+└── enrollment-service/     # 选课服务模块（独立 Maven 项目，集成OpenFeign）
 ```
 
 ### 2. 一键启动所有服务
 
 ```sh
-#1. 首次运行赋予脚本执行权限
+# 1. 首次运行赋予脚本执行权限
 chmod +x run.sh
 
-#2. 构建 Docker 镜像并启动所有服务（含 Nacos、数据库、微服务）
+# 2. 构建 Docker 镜像并启动所有服务（含 Nacos、数据库、微服务）
 ./run.sh
 ```
 
 脚本自动完成以下操作：
-
 * 编译各微服务源码并构建 Docker 镜像；
-
 * 启动 Nacos 服务中心、3 个独立 MySQL 数据库容器；
-
 * 启动所有微服务容器并注册到 Nacos；
-
 * 等待服务健康检查通过，输出最终服务状态和访问地址。
 
-### 3. 验证服务启动成功
-
-```sh
-#查看所有运行中的容器
-docker ps
-#访问 Nacos 控制台验证服务注册（默认账号/密码：nacos/nacos）
-#open http://localhost:8848/nacos  # Linux
-或直接在浏览器输入：http://localhost:8848/nacos
-```
-
-在 Nacos 控制台「服务管理→服务列表」中，应能看到 `user-service`、`catalog-service`、`enrollment-service` 三个服务均已注册（每个服务默认 1 个实例）。
-
-## 测试指南
-
-### 1. 基础功能测试（验证服务可用性）
+### 3. 创建初始学生和课程数据
 
 ```sh
 # 1. 赋予测试脚本执行权限
 chmod +x test-services.sh
 
-# 2. 执行基础功能测试
+# 2. 执行基础功能测试（创建初始学生和课程数据）
 ./test-services.sh
 ```
 
 测试内容：
-
 * ✅ 新增 / 查询学生（验证 user-service）；
-
 * ✅ 新增 / 查询课程（验证 catalog-service）；
-
 * ✅ 学生选课 / 查询选课记录（验证 enrollment-service 及服务间通信）；
-
 * ✅ 异常场景测试（学生不存在、课程不存在时的错误处理）。
 
-### 2. 负载均衡测试（验证多实例请求分发）
+## OpenFeign 配置说明
 
-```sh
-# 1. 赋予测试脚本执行权限
+OpenFeign 是 Spring Cloud 提供的声明式 HTTP 客户端，用于简化服务间通信。在本项目中，选课服务（enrollment-service）通过 OpenFeign 调用用户服务和课程目录服务。
 
-chmod +x nacos-test.sh
+### 1. 核心依赖配置
 
-# 2. 执行负载均衡测试
+在 `enrollment-service/pom.xml` 中添加 OpenFeign 和 Resilience4j 依赖：
 
-./nacos-test.sh
+```xml
+<!-- OpenFeign 依赖 -->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-openfeign</artifactId>
+</dependency>
+
+<!-- Resilience4j 依赖（用于熔断降级） -->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
+</dependency>
 ```
 
-核心验证逻辑：
+### 2. 启用 OpenFeign
 
-* 自动启动额外的 `user-service-2` 和 `catalog-service-2` 实例；
-
-* 通过 Nacos API 展示多实例注册状态（每个服务 2 个实例）；
-
-* 10 次循环调用接口，验证请求均匀分发到不同实例；
-
-* 输出实例调用统计结果，直观展示负载均衡效果。
-
-### 3. 故障转移测试（核心验证高可用）
-
-手动测试步骤（或通过 `nacos-test.sh` 自动执行）：
-
-```sh
-\# 步骤 1：启动额外实例（模拟多实例部署）
-
-docker run -d --name catalog-service-2 --network course-cloud\_course-network -p 8084:8082 -e SPRING\_DATASOURCE\_URL=jdbc:mysql://catalog-db:3306/catalog\_db?useSSL=false\\\&allowPublicKeyRetrieval=true -e SPRING\_CLOUD\_NACOS\_DISCOVERY\_SERVER-ADDR=nacos:8848 course-cloud-catalog-service:1.1.0
-
-\# 步骤 2：查看当前实例（确认 2 个 catalog-service 实例）
-
-docker ps | grep catalog-service
-
-\# 步骤 3：停止其中一个实例（模拟故障）
-
-docker stop course-cloud-catalog-service-1
-
-\# 步骤 4：等待 15 秒（Nacos 检测并剔除故障实例）
-
-sleep 15
-
-\# 步骤 5：验证故障转移（请求自动路由到健康实例）
-
-for i in {1..5}; do
-
- echo "故障后第 \$i 次调用："
-
- curl -s http://localhost:8084/api/courses/test | jq '.port, .status, .hostname'
-
- sleep 1
-
- echo "------------------------"
-
-done
-```
-
-**预期效果**：
-
-* 故障实例停止后，Nacos 控制台标记该实例为「不健康」；
-
-* 所有请求无报错、无超时，自动路由到剩余健康实例；
-
-* 接口返回 `status=UP`，证明故障转移生效。
-
-## 核心配置说明
-
-### 1. Nacos 服务配置（docker-compose.yml）
-
-```yml
-nacos:
-
- image: nacos/nacos-server:v2.2.3
-
- container\_name: nacos
-
- environment:
-
-   - MODE=standalone                # 单机模式（开发/测试环境）
-
-   - JVM\_XMS=256m                   # JVM 内存配置（适配开发机资源）
-
-   - JVM\_XMX=256m
-
-   - JVM\_XMN=128m
-
- ports:
-
-   - "8848:8848"                    # Nacos 核心服务端口（服务注册发现）
-
-   - "8080:8080"                    # 控制台访问端口
-
-   - "9848:9848"                    # 客户端通信端口
-
- volumes:
-
-   - nacos-data:/home/nacos/data    # 数据持久化（避免重启丢失注册信息）
-
-   - nacos-logs:/home/nacos/logs    # 日志持久化
-
- networks:
-
-   - course-network                 # 加入微服务统一网络
-
- healthcheck:
-
-   test: \["CMD", "curl", "-f", "http://localhost:8848/nacos/"]
-
-   interval: 20s                    # 健康检查间隔
-
-   timeout: 15s                     # 超时时间
-
-   retries: 20                      # 重试次数
-
-   start\_period: 90s                # 启动初始化等待时间（避免误判）
-
- restart: unless-stopped            # 异常退出自动重启（提高可用性）
-```
-
-### 2. 微服务 Nacos 注册配置（application.yml）
-
-以 `catalog-service` 为例：
-
-```yml
-spring:
-
- application:
-
-   name: catalog-service            # 服务名（Nacos 注册唯一标识）
-
- cloud:
-
-   nacos:
-
-     discovery:
-
-       server-addr: nacos:8848       # Nacos 地址（容器内域名，无需改 IP）
-
-       namespace: dev               # 命名空间（需提前在 Nacos 控制台创建）
-
-       group: DEFAULT\_GROUP         # 服务分组（默认即可）
-
-       instance-id: \${HOSTNAME}     # 实例 ID（用容器名保证唯一）
-
-       heart-beat-interval: 5000    # 心跳间隔 5 秒（Nacos 探测服务存活）
-
-       heart-beat-timeout: 15000    # 心跳超时 15 秒（超时标记为不健康）
-
-       ip-delete-timeout: 30000     # 实例剔除超时 30 秒（不健康实例剔除）
-
-management:
-
- endpoints:
-
-   web:
-
-     exposure:
-
-       include: health              # 暴露健康检查接口（Nacos 调用）
-
- endpoint:
-
-   health:
-
-     show-details: always           # 显示健康检查详情（便于排查问题）
-```
-
-### 3. 负载均衡配置（enrollment-service）
-
-通过 `@LoadBalanced` 注解开启 RestTemplate 负载均衡：
+在 `enrollment-service` 的主类中添加 `@EnableFeignClients` 注解：
 
 ```java
-@Configuration
-
-public class RestTemplateConfig {
-
-   @Bean
-
-   @LoadBalanced  // 关键注解：开启负载均衡，支持通过服务名调用
-
-   public RestTemplate restTemplate() {
-
-       return new RestTemplate();
-
-   }
-
+@SpringBootApplication
+@EnableDiscoveryClient
+@EnableFeignClients  // 启用 OpenFeign
+public class EnrollmentApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(EnrollmentApplication.class, args);
+    }
 }
 ```
 
-使用示例（调用 user-service 接口）：
+### 3. Feign 客户端接口定义
+
+创建 Feign 客户端接口，定义服务间调用的 API：
 
 ```java
-// 直接通过服务名调用（无需写 IP:端口，Nacos 自动解析并负载均衡）
+// 用户服务客户端
+@FeignClient(name = "user-service", fallback = UserServiceClientFallback.class)
+public interface UserServiceClient {
+    @GetMapping("/api/students/studentId/{studentId}")
+    Map<String, Object> getStudentById(@PathVariable("studentId") String studentId);
+}
 
-String userUrl = "http://user-service/api/students/studentId/" + studentId;
-
-Map, Object> studentInfo = restTemplate.getForObject(userUrl, Map.class);
+// 课程目录服务客户端
+@FeignClient(name = "catalog-service", fallback = CatalogServiceClientFallback.class)
+public interface CatalogServiceClient {
+    @GetMapping("/api/courses/{courseId}")
+    Map<String, Object> getCourseById(@PathVariable("courseId") String courseId);
+}
 ```
 
+### 4. 熔断降级实现
 
+为每个 Feign 客户端创建 fallback 实现类，处理服务不可用时的降级逻辑：
 
-| 服务               | 数据库名       | 宿主机端口 | 容器内端口 | 用户名           | 密码             |
-| ------------------ | -------------- | ---------- | ---------- | ---------------- | ---------------- |
-| user-service       | user\_db       | 3306       | 3306       | user\_user       | user\_pass       |
-| catalog-service    | catalog\_db    | 3307       | 3306       | catalog\_user    | catalog\_pass    |
-| enrollment-service | enrollment\_db | 3308       | 3306       | enrollment\_user | enrollment\_pass |
+```java
+// 用户服务客户端降级实现
+@Component
+public class UserServiceClientFallback implements UserServiceClient {
+    private static final Logger log = LoggerFactory.getLogger(UserServiceClientFallback.class);
+
+    @Override
+    public Map<String, Object> getStudentById(String studentId) {
+        log.warn("UserServiceClient fallback: getStudentById called with studentId={}, but user-service is unavailable", studentId);
+        throw new RuntimeException("User service is temporarily unavailable, please try again later");
+    }
+}
+
+// 课程目录服务客户端降级实现
+@Component
+public class CatalogServiceClientFallback implements CatalogServiceClient {
+    private static final Logger log = LoggerFactory.getLogger(CatalogServiceClientFallback.class);
+
+    @Override
+    public Map<String, Object> getCourseById(String courseId) {
+        log.warn("CatalogServiceClient fallback: getCourseById called with courseId={}, but catalog-service is unavailable", courseId);
+        throw new RuntimeException("Catalog service is temporarily unavailable, please try again later");
+    }
+}
+```
+
+### 5. 使用 Feign 客户端
+
+在服务中注入并使用 Feign 客户端：
+
+```java
+@Service
+@Transactional
+public class EnrollmentService {
+    private final UserServiceClient userServiceClient;
+    private final CatalogServiceClient catalogServiceClient;
+    private final EnrollmentRepository repository;
+
+    public EnrollmentService(UserServiceClient userServiceClient, CatalogServiceClient catalogServiceClient, EnrollmentRepository repository) {
+        this.userServiceClient = userServiceClient;
+        this.catalogServiceClient = catalogServiceClient;
+        this.repository = repository;
+    }
+
+    public EnrollmentRecord enroll(String courseId, String studentId) {
+        // 通过 OpenFeign 调用用户服务
+        Map<String, Object> studentResponse = userServiceClient.getStudentById(studentId);
+        
+        // 通过 OpenFeign 调用课程目录服务
+        Map<String, Object> courseResponse = catalogServiceClient.getCourseById(courseId);
+        
+        // 处理选课逻辑...
+    }
+}
+```
+
+## 负载均衡测试
+
+### 测试脚本
+
+使用 `test-load-balance.sh` 脚本进行负载均衡测试：
+
+```sh
+# 1. 赋予脚本执行权限
+chmod +x test-load-balance.sh
+
+# 2. 执行负载均衡测试
+./test-load-balance.sh
+```
+
+### 测试原理
+
+1. 脚本自动验证 user-service 的 3 个实例是否正常运行
+2. 通过 enrollment-service 调用 user-service 执行选课操作
+3. 统计不同 user-service 实例处理的请求数量
+4. 验证请求是否均匀分布到不同实例
+
+### 测试结果
+
+![c369ae9baf28766a8ae5311de0704bb2](D:\腾讯电脑管家文件搬家\微信聊天文件搬家\Users\20168\xwechat_files\wxid_6hj4g9hwluud22_95f7\temp\RWTemp\2025-12\11203f1f0463db1a7325bf8568c7275f\c369ae9baf28766a8ae5311de0704bb2.png)
+
+![6eb4e867d1fe3306ac9e65c5cd424759](D:\腾讯电脑管家文件搬家\微信聊天文件搬家\Users\20168\xwechat_files\wxid_6hj4g9hwluud22_95f7\temp\RWTemp\2025-12\11203f1f0463db1a7325bf8568c7275f\6eb4e867d1fe3306ac9e65c5cd424759.png)
+
+从日志可以看出，请求被均匀分配到了 user-service 的 3 个实例：
+- user-service-1: 处理了 1 个请求
+- user-service-2: 处理了 1 个请求
+- user-service-3: 处理了 1 个请求
+
+这表明 OpenFeign 结合 Nacos 实现了良好的负载均衡效果，请求按轮询策略均匀分发到不同实例。
+
+## 熔断降级测试
+
+### 测试脚本
+
+使用 `Fallback.sh` 脚本进行熔断降级测试：
+
+```sh
+# 1. 赋予脚本执行权限
+chmod +x Fallback.sh
+
+# 2. 执行熔断降级测试
+./Fallback.sh
+```
+
+### 测试原理
+
+1. 脚本自动停止所有 user-service 实例
+2. 通过 enrollment-service 调用 user-service 执行选课操作
+3. 验证是否触发 fallback 机制
+4. 重启 user-service 实例，验证服务恢复后是否正常工作
+
+### 测试结果
+
+![1abece519e400a2f6f98e689afa01f59](D:\腾讯电脑管家文件搬家\微信聊天文件搬家\Users\20168\xwechat_files\wxid_6hj4g9hwluud22_95f7\temp\RWTemp\2025-12\11203f1f0463db1a7325bf8568c7275f\1abece519e400a2f6f98e689afa01f59.png)
+
+![37a3ae3c0b26713b0371b25341060a7c](D:\腾讯电脑管家文件搬家\微信聊天文件搬家\Users\20168\xwechat_files\wxid_6hj4g9hwluud22_95f7\temp\RWTemp\2025-12\11203f1f0463db1a7325bf8568c7275f\37a3ae3c0b26713b0371b25341060a7c.png)
+
+从日志可以看出：
+1. 当 user-service 停止后，请求触发了 fallback 机制
+2. 当 user-service 重启后，请求恢复正常处理
+
+这表明 OpenFeign 的熔断降级机制正常工作，能够在服务不可用时提供友好的错误提示，保障系统的可用性。
+
+## OpenFeign vs RestTemplate 对比分析
+
+| 特性 | OpenFeign | RestTemplate |
+|------|-----------|--------------|
+| **编程模型** | 声明式，基于接口注解 | 命令式，需要手动构建请求 |
+| **服务发现集成** | 自动集成 Ribbon/Nacos 负载均衡 | 需要手动添加 `@LoadBalanced` 注解 |
+| **代码可读性** | 高，接口定义清晰，易于维护 | 低，需要编写大量模板代码 |
+| **熔断降级支持** | 内置支持，通过 `fallback` 属性配置 | 需要手动集成 Hystrix/Resilience4j |
+| **错误处理** | 自动处理 HTTP 错误，可自定义 fallback | 需要手动处理异常和错误码 |
+| **日志支持** | 内置详细日志，可配置日志级别 | 需要手动添加日志记录 |
+| **扩展性** | 支持自定义拦截器、编码器、解码器 | 支持，但需要手动配置 |
+
+### 本项目选择 OpenFeign 的原因
+
+1. **简化代码**：通过声明式接口减少了大量模板代码，提高开发效率
+2. **更好的可维护性**：接口定义清晰，便于团队协作和代码维护
+3. **内置负载均衡**：自动集成 Nacos 负载均衡，无需额外配置
+4. **完善的熔断降级**：通过 fallback 机制提供良好的故障容错能力
+5. **与 Spring Cloud 生态完美集成**：与 Nacos、Resilience4j 等组件无缝协作
 
 ## 常见问题排查
 
-### 1. 服务启动失败
+### 1. OpenFeign 调用失败
 
-* 检查容器日志：`docker logs <容器名>`（如 `docker logs course-cloud-catalog-service-1`）
-
-* 确认数据库容器正常运行：`docker ps | grep mysql`
-
-* 验证 Nacos 连接：访问 `http://localhost:8848/nacos` 确认服务可用
+* 检查 Feign 客户端接口定义是否正确
+* 确认服务名是否与 Nacos 中注册的服务名一致
+* 检查 fallback 类是否添加了 `@Component` 注解
+* 查看日志确认具体错误信息：`docker logs enrollment-service`
 
 ### 2. 负载均衡不生效
 
-* 确认 RestTemplate 加了 `@LoadBalanced` 注解
+* 确认 Nacos 控制台中服务多实例已注册
+* 检查 Feign 客户端是否使用了服务名而非 IP:端口
+* 查看日志确认请求是否分发到不同实例
 
-* 检查 Nacos 控制台，确认服务多实例已注册
+### 3. 熔断降级未触发
 
-* 调用接口时使用服务名（如 `http://catalog-service/api/courses`）而非 IP: 端口
-
-### 3. 故障转移未生效
-
-* 等待足够时间（至少 15 秒），Nacos 需要时间剔除故障实例
-
-* 检查 Nacos 心跳配置（`heart-beat-timeout`/`ip-delete-timeout`）
-
-* 确认实例加入统一网络：`--network course-cloud_course-network`
+* 确认 Resilience4j 依赖已正确添加
+* 检查 fallback 类是否正确实现了 Feign 客户端接口
+* 确认服务确实不可用（可通过停止服务实例测试）
 
 ## 运维指令
 
@@ -433,25 +329,23 @@ Map, Object> studentInfo = restTemplate.getForObject(userUrl, Map.class);
 docker-compose down
 ```
 
-#### 停止并删除数据卷（重置环境）
+### 停止并删除数据卷（重置环境）
 
 ```sh
 docker-compose down -v
 ```
 
-#### 查看服务日志
+### 查看服务日志
 
 ```sh
-\# 查看单个服务日志
+# 查看单个服务日志
+docker-compose logs -f enrollment-service
 
-docker-compose logs -f catalog-service
-
-\# 查看所有服务日志
-
+# 查看所有服务日志
 docker-compose logs -f
 ```
 
-#### 重启单个服务
+### 重启单个服务
 
 ```sh
 docker-compose restart user-service
@@ -460,9 +354,6 @@ docker-compose restart user-service
 ## 扩展说明
 
 * **多环境部署**：可通过 Nacos 命名空间（namespace）区分开发 / 测试 / 生产环境
-
 * **服务监控**：可集成 Spring Boot Admin 监控微服务健康状态
-
-* **熔断降级**：可扩展集成 Sentinel 实现服务熔断，避免雪崩效应
-
 * **配置中心**：可基于 Nacos 配置中心实现配置动态刷新，无需重启服务
+* **链路追踪**：可集成 Zipkin 或 SkyWalking 实现分布式链路追踪

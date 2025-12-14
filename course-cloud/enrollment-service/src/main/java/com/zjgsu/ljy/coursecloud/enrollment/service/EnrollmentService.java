@@ -1,13 +1,15 @@
 package com.zjgsu.ljy.coursecloud.enrollment.service;
 
+import com.zjgsu.ljy.coursecloud.enrollment.client.CatalogServiceClient;
+import com.zjgsu.ljy.coursecloud.enrollment.client.UserServiceClient;
 import com.zjgsu.ljy.coursecloud.enrollment.model.EnrollmentRecord;
 import com.zjgsu.ljy.coursecloud.enrollment.repository.EnrollmentRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Map;
@@ -18,14 +20,13 @@ public class EnrollmentService {
 
     private static final Logger log = LoggerFactory.getLogger(EnrollmentService.class);
 
-    private final RestTemplate restTemplate;
+    private final UserServiceClient userServiceClient;
+    private final CatalogServiceClient catalogServiceClient;
     private final EnrollmentRepository repository;
 
-    private static final String USER_SERVICE_URL = "http://user-service";  // Nacos 服务名
-    private static final String CATALOG_SERVICE_URL = "http://catalog-service";  // Nacos 服务名
-
-    public EnrollmentService(RestTemplate restTemplate, EnrollmentRepository repository) {
-        this.restTemplate = restTemplate;
+    public EnrollmentService(UserServiceClient userServiceClient, CatalogServiceClient catalogServiceClient, EnrollmentRepository repository) {
+        this.userServiceClient = userServiceClient;
+        this.catalogServiceClient = catalogServiceClient;
         this.repository = repository;
     }
 
@@ -38,28 +39,34 @@ public class EnrollmentService {
             throw new IllegalStateException("Student is already enrolled in this course");
         }
 
-        // 1. ⭐ 通过服务名调用 user-service
+        // 1. ⭐ 通过OpenFeign调用 user-service
         try {
-            String userUrl = USER_SERVICE_URL + "/api/students/studentId/" + studentId;
-            log.info("调用 user-service 验证学生: {}", userUrl);
-
-            Map<String, Object> studentResponse = restTemplate.getForObject(userUrl, Map.class);
+            log.info("调用 user-service 验证学生: studentId={}", studentId);
+            Map<String, Object> studentResponse = userServiceClient.getStudentById(studentId);
             log.info("学生验证成功，响应来自端口: {}", studentResponse.get("port"));  // ✅ 日志显示负载均衡
-
-        } catch (HttpClientErrorException.NotFound e) {
-            log.error("学生不存在: {}", studentId);
-            throw new IllegalArgumentException("Student not found: " + studentId);
-        } catch (Exception e) {
+        } catch (HttpClientErrorException e) {
             log.error("验证学生时出错: {}", e.getMessage(), e);
+            // 检查是否为404错误
+            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                throw new IllegalArgumentException("Student not found: " + studentId);
+            }
             throw new RuntimeException("Error verifying student with user-service: " + e.getMessage());
+        } catch (RuntimeException e) {
+            log.error("验证学生时服务降级: {}", e.getMessage(), e);
+            // 处理fallback抛出的异常
+            if (e.getMessage().contains("temporarily unavailable")) {
+                throw new RuntimeException("User service is temporarily unavailable, please try again later");
+            }
+            throw e;
+        } catch (Exception e) {
+            log.error("验证学生时发生未知错误: {}", e.getMessage(), e);
+            throw new RuntimeException("Unexpected error verifying student with user-service: " + e.getMessage());
         }
 
-        // 2. ⭐ 通过服务名调用 catalog-service
+        // 2. ⭐ 通过OpenFeign调用 catalog-service
         try {
-            String courseUrl = CATALOG_SERVICE_URL + "/api/courses/" + courseId;
-            log.info("调用 catalog-service 验证课程: {}", courseUrl);
-
-            Map<String, Object> courseResponse = restTemplate.getForObject(courseUrl, Map.class);
+            log.info("调用 catalog-service 验证课程: courseId={}", courseId);
+            Map<String, Object> courseResponse = catalogServiceClient.getCourseById(courseId);
 
             if (courseResponse == null) {
                 log.error("课程不存在: {}", courseId);
@@ -82,14 +89,23 @@ public class EnrollmentService {
                 throw new IllegalStateException("Course capacity reached");
             }
 
-        } catch (HttpClientErrorException.NotFound e) {
-            log.error("课程不存在: {}", courseId);
-            throw new IllegalArgumentException("Course not found: " + courseId);
-        } catch (IllegalStateException | IllegalArgumentException e) {
+        } catch (HttpClientErrorException e) {
+            log.error("验证课程时出错: {}", e.getMessage(), e);
+            // 检查是否为404错误
+            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                throw new IllegalArgumentException("Course not found: " + courseId);
+            }
+            throw new RuntimeException("Error verifying course with catalog-service: " + e.getMessage());
+        } catch (RuntimeException e) {
+            log.error("验证课程时服务降级: {}", e.getMessage(), e);
+            // 处理fallback抛出的异常
+            if (e.getMessage().contains("temporarily unavailable")) {
+                throw new RuntimeException("Catalog service is temporarily unavailable, please try again later");
+            }
             throw e;
         } catch (Exception e) {
-            log.error("验证课程时出错: {}", e.getMessage(), e);
-            throw new RuntimeException("Error verifying course with catalog-service: " + e.getMessage());
+            log.error("验证课程时发生未知错误: {}", e.getMessage(), e);
+            throw new RuntimeException("Unexpected error verifying course with catalog-service: " + e.getMessage());
         }
 
         // 3. Create enrollment record
