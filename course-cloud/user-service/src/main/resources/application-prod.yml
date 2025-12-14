@@ -12,3 +12,5 @@ spring:
 logging:
   level:
     root: ${LOGGING_LEVEL_ROOT:INFO}
+
+

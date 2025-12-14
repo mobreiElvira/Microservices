@@ -28,6 +28,12 @@ public abstract class User {
     @Column(name = "user_type_enum", nullable = false, insertable = false, updatable = false)
     private UserType userType;
 
+    // ========== 新增 password 字段 ==========
+    @NotBlank(message = "Password is required")
+    @Column(nullable = false, length = 255)
+    private String password;
+
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -41,9 +47,26 @@ public abstract class User {
         this.userType = userType;
     }
 
+    // ========== 新增构造方法（包含password） ==========
+    protected User(String username, String email, String password, UserType userType) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.userType = userType;
+    }
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
+    }
+
+
+    public @NotBlank(message = "Password is required") String getPassword() {
+        return password;
+    }
+
+    public void setPassword(@NotBlank(message = "Password is required") String password) {
+        this.password = password;
     }
 
     // Getters and setters

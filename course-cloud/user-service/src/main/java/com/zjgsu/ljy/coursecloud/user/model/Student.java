@@ -37,6 +37,17 @@ public class Student extends User {
         this.grade = grade;
     }
 
+    // ========== 新增：带password的构造函数 ==========
+    public Student(String username, String email, String password, UserType userType,
+                   String studentId, String name, String major, Integer grade) {
+        super(username, email, password, userType); // 调用父类带password的构造
+        this.studentId = studentId;
+        this.name = name;
+        this.major = major;
+        this.grade = grade;
+    }
+
+
     // Getters and setters
     public String getStudentId() {
         return studentId;

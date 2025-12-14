@@ -8,6 +8,9 @@ public record StudentRequest(
     @NotBlank(message = "Username is required")
     String username,
 
+    @NotBlank(message = "Password is required")
+    String password,
+
     @NotBlank(message = "Email is required")
     @Email(message = "Email must be valid")
     String email,
@@ -23,5 +26,8 @@ public record StudentRequest(
 
     @Positive(message = "Grade must be positive")
     int grade
+
+
 ) {
+
 }

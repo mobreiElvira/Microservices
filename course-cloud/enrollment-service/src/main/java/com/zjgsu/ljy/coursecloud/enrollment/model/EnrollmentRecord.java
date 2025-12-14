@@ -35,6 +35,7 @@ public class EnrollmentRecord {
     public EnrollmentRecord(String courseId, String studentId) {
         this.courseId = courseId;
         this.studentId = studentId;
+        this.enrolledAt = LocalDateTime.now();
     }
 
     @PrePersist

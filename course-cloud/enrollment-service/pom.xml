@@ -50,10 +50,12 @@
     </dependencyManagement>
 
     <dependencies>
+        <!-- ⭐⭐⭐ Validation 依赖 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
+        <!-- ⭐ Spring Cloud Bootstrap 支持 -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-bootstrap</artifactId>
@@ -103,6 +105,25 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- OpenFeign -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+        <!-- Resilience4j 熔断器 -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
+        </dependency>
+
+        <!-- Resilience4j Spring Boot 3 support (提供 resilience4j 的 actuator 子端点) -->
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-spring-boot3</artifactId>
+            <version>2.0.2</version> <!-- 或与你的 BOM 对应的版本 -->
+        </dependency>
+
+
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -115,17 +136,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
-        </dependency>
-
-        <!-- OpenFeign 依赖 -->
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-openfeign</artifactId>
-        </dependency>
-        <!-- Resilience4j 依赖 -->
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
         </dependency>
     </dependencies>
 
@@ -155,8 +165,8 @@
                     <target>17</target>
                     <release>17</release>
                     <fork>true</fork>
-<!--                    <executable>/usr/lib/jvm/java-21-openjdk-amd64/bin/javac</executable>-->
-<!--                    <compilerVersion>21</compilerVersion>-->
+<!--                    <executable>/usr/lib/jvm/java-17-openjdk-amd64/bin/javac</executable>-->
+<!--                    <compilerVersion>17</compilerVersion>-->
                 </configuration>
             </plugin>
         </plugins>

@@ -45,7 +45,59 @@ management:
   endpoints:
     web:
       exposure:
-        include: health  # 暴露 /actuator/health 端点
+        include: health,mappings  # 暴露 /actuator/health 和 /actuator/mappings 端点
   endpoint:
     health:
       show-details: always  # 显示健康详情，便于 Nacos 识别服务状态
+
+jwt:
+  secret: "MySecretKeyForJWT2024CourseCloudSystemVeryLongAndSecure1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  expiration: 86400000
+
+
+
+# 09本地测试
+#
+#server:
+#  port: 8081  # 保持原有端口
+#
+#spring:
+#  application:
+#    name: user-service  # 仅标识服务名称，无实际注册作用
+#
+#  # 本地MySQL配置（确保本地MySQL已启动、user_db已创建）
+#  datasource:
+#    url: jdbc:mysql://localhost:3306/user_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&characterEncoding=utf-8
+#    username: root
+#    password: 123456
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#
+#  # JPA配置（保持原有）
+#  jpa:
+#    hibernate:
+#      ddl-auto: update  # 自动更新表结构
+#    show-sql: true  # 打印 SQL 日志
+#    properties:
+#      hibernate:
+#        format_sql: true  # 格式化 SQL
+#        dialect: org.hibernate.dialect.MySQL8Dialect  # 手动指定 MySQL 8 方言
+#    open-in-view: false
+#
+#
+#
+## 日志配置（简化，关闭Nacos相关日志）
+#logging:
+#  level:
+#    root: INFO
+#    org.hibernate: DEBUG  # 打印 Hibernate 详细日志
+#    org.springframework.jdbc: DEBUG  # 打印 JDBC 连接日志
+#    # 关闭所有Cloud/Nacos日志（减少干扰）
+#    com.alibaba.cloud.nacos: OFF
+#    com.alibaba.nacos: OFF
+#    org.springframework.cloud: OFF
+#
+#jwt:
+#  secret: "MySecretKeyForJWT2024CourseCloudSystemVeryLongAndSecure1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+#  expiration: 86400000
+#
+#

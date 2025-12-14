@@ -12,3 +12,46 @@ spring:
 logging:
   level:
     root: ${LOGGING_LEVEL_ROOT:INFO}
+
+
+
+## Feign Configuration
+#feign:
+#  client:
+#    config:
+#      default:
+#        connectTimeout: 3000        # 连接超时3秒
+#        readTimeout: 5000           # 读取超时5秒
+#      catalog-service:
+#        connectTimeout: 2000        # user-service特定配置
+#        readTimeout: 3000
+#  circuitbreaker:
+#    enabled: true                   # 启用熔断器
+#
+## Resilience4j Circuit Breaker Configuration
+#resilience4j:
+#  circuitbreaker:
+#    instances:
+#      catalog-service:
+#        # 熔断器配置
+#        failure-rate-threshold: 50                    # 失败率阈值50%
+#        slow-call-rate-threshold: 50                  # 慢调用率阈值50%
+#        slow-call-duration-threshold: 2s              # 慢调用时间阈值2秒
+#        sliding-window-type: COUNT_BASED              # 滑动窗口类型:基于计数
+#        sliding-window-size: 10                       # 滑动窗口大小10次调用
+#        minimum-number-of-calls: 5                    # 最少调用次数5次
+#        # 状态转换配置
+#        wait-duration-in-open-state: 10s              # 熔断后等待时间10秒
+#        permitted-number-of-calls-in-half-open-state: 3  # 半开状态允许调用3次
+#        automatic-transition-from-open-to-half-open-enabled: true  # 自动转换
+#        register-health-indicator: true
+#  retry:
+#    instances:
+#      catalog-service:
+#        max-attempts: 3                    # 最大重试次数3次
+#        wait-duration: 500ms               # 重试间隔500ms
+#        enable-exponential-backoff: true   # 启用指数退避
+#        exponential-backoff-multiplier: 2  # 退避乘数2
+#        retry-exceptions:                  # 重试异常
+#          - java.net.ConnectException
+#          - java.net.SocketTimeoutException

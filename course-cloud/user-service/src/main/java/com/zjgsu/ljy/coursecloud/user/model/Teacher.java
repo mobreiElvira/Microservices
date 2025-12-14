@@ -35,6 +35,16 @@ public class Teacher extends User {
         this.title = title;
     }
 
+    // 新增：带password的构造函数（适配你的调用）
+    public Teacher(String username, String email, String password, UserType userType,
+                   String teacherId, String name, String department, String title) {
+        super(username, email, password, userType); // 调用父类带password的构造
+        this.teacherId = teacherId;
+        this.name = name;
+        this.department = department;
+        this.title = title;
+    }
+
     // Getters and setters
     public String getTeacherId() {
         return teacherId;

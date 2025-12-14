@@ -22,7 +22,8 @@ public record CourseResponse(
                 course.getInstructor().getName(),
                 course.getInstructor().getEmail(),
                 course.getSchedule().getDayOfWeek().name(),
-                course.getSchedule().getStart().toString(),
+               course.getSchedule().getStart().toString(),
+//                course.getSchedule().getStartTime().toString(),
                 course.getSchedule().getEnd().toString(),
                 course.getCapacity(),
                 course.getSchedule().expectedAttendance()
